@@ -19,7 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@WebServlet("/api/conferences")
+@WebServlet(name = "ConferenceServlet", urlPatterns = {"/api/conferences"})
 public class ConferenceServlet extends HttpServlet {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -33,7 +33,11 @@ public class ConferenceServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        String sql = "SELECT conference_id, title, location,start_date, description FROM Conference ORDER BY conference_id";
+        String sql = "SELECT conference_id, title, location,\n" +
+"               start_date, description, status\n" +
+"        FROM Conference\n" +
+"        WHERE status <> 'Cancelled'\n" +
+"        ORDER BY start_date ASC";
 
         try (
             Connection connection = DBConnection.getConnection();
@@ -74,6 +78,11 @@ public class ConferenceServlet extends HttpServlet {
                 conference.put(
                         "description",
                         resultSet.getString("description")
+                );
+                
+                conference.put(
+                        "status",
+                        resultSet.getString("status")
                 );
 
                 conferences.add(conference);

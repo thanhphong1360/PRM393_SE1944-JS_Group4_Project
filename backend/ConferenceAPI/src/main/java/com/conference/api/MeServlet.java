@@ -11,7 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-@WebServlet("/api/me")
+@WebServlet(name = "MeServlet", urlPatterns = {"/api/me"})
 public class MeServlet extends HttpServlet {
 
     private final ObjectMapper objectMapper =

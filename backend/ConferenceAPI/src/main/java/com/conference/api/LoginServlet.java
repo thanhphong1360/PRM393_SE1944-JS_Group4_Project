@@ -21,7 +21,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet("/api/auth/login")
+@WebServlet(name = "LoginServlet", urlPatterns = {"/api/auth/login"})
 public class LoginServlet extends HttpServlet {
 
     private final ObjectMapper objectMapper = new ObjectMapper();

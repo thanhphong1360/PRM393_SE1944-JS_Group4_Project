@@ -36,6 +36,22 @@
         <servlet-name>AdminTestServlet</servlet-name>
         <servlet-class>com.conference.api.AdminTestServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>CreateConferenceServlet</servlet-name>
+        <servlet-class>com.conference.api.CreateConferenceServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ConferenceDetailServlet</servlet-name>
+        <servlet-class>com.conference.api.ConferenceDetailServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>UpdateConferenceServlet</servlet-name>
+        <servlet-class>com.conference.api.UpdateConferenceServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>AdminConferenceListServlet</servlet-name>
+        <servlet-class>com.conference.api.AdminConferenceListServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>HealthServlet</servlet-name>
         <url-pattern>/HealthServlet</url-pattern>
@@ -46,7 +62,7 @@
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>ConferenceServlet</servlet-name>
-        <url-pattern>/api/conference</url-pattern>
+        <url-pattern>/api/conferences</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>PasswordTestServlet</servlet-name>
@@ -71,6 +87,22 @@
     <servlet-mapping>
         <servlet-name>AdminTestServlet</servlet-name>
         <url-pattern>/api/admin/test</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>CreateConferenceServlet</servlet-name>
+        <url-pattern>/api/admin/conferences</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ConferenceDetailServlet</servlet-name>
+        <url-pattern>/api/conferences/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>UpdateConferenceServlet</servlet-name>
+        <url-pattern>/api/admin/conferences/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AdminConferenceListServlet</servlet-name>
+        <url-pattern>/api/admin/conferences/all</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>
