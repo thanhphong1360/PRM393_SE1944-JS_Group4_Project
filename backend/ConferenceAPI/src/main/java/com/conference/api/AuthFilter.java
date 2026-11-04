@@ -21,12 +21,13 @@ import java.util.Map;
 @WebFilter({
     "/api/me",
     "/api/admin/*",
-    "/api/staff/*"
+    "/api/staff/*",
+    "/api/register-conference/*"
 })
 public class AuthFilter implements Filter {
 
-    private final ObjectMapper objectMapper =
-            new ObjectMapper();
+    private final ObjectMapper objectMapper
+            = new ObjectMapper();
 
     @Override
     public void doFilter(
@@ -35,18 +36,18 @@ public class AuthFilter implements Filter {
             FilterChain chain)
             throws IOException, ServletException {
 
-        HttpServletRequest httpRequest =
-                (HttpServletRequest) request;
+        HttpServletRequest httpRequest
+                = (HttpServletRequest) request;
 
-        HttpServletResponse httpResponse =
-                (HttpServletResponse) response;
+        HttpServletResponse httpResponse
+                = (HttpServletResponse) response;
 
         httpResponse.setContentType("application/json");
         httpResponse.setCharacterEncoding("UTF-8");
 
         // 1. Lấy JWT từ Authorization header
-        String authHeader =
-                httpRequest.getHeader("Authorization");
+        String authHeader
+                = httpRequest.getHeader("Authorization");
 
         if (authHeader == null
                 || !authHeader.startsWith("Bearer ")) {
@@ -134,6 +135,17 @@ public class AuthFilter implements Filter {
                     "Staff permission required"
             );
             return;
+        }
+
+        if (path.contains("/api/register-conference/")) {
+            if (!"Attendee".equals(role)) {
+                sendError(
+                        httpResponse,
+                        403,
+                        "Attendee permission required"
+                );
+                return;
+            }
         }
 
         // 5. Chuyển thông tin người dùng cho Servlet

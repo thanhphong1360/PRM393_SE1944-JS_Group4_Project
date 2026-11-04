@@ -1,4 +1,5 @@
 com\conference\api\HealthServlet.class
+com\conference\api\RegisterConferenceServlet.class
 com\conference\api\RegisterServlet.class
 com\conference\api\UpdateConferenceServlet.class
 com\conference\api\ConferenceDetailServlet.class

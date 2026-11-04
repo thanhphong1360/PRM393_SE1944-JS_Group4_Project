@@ -52,6 +52,10 @@
         <servlet-name>AdminConferenceListServlet</servlet-name>
         <servlet-class>com.conference.api.AdminConferenceListServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>RegisterConferenceServlet</servlet-name>
+        <servlet-class>com.conference.api.RegisterConferenceServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>HealthServlet</servlet-name>
         <url-pattern>/HealthServlet</url-pattern>
@@ -103,6 +107,10 @@
     <servlet-mapping>
         <servlet-name>AdminConferenceListServlet</servlet-name>
         <url-pattern>/api/admin/conferences/all</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RegisterConferenceServlet</servlet-name>
+        <url-pattern>/api/register-conference/*</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>
