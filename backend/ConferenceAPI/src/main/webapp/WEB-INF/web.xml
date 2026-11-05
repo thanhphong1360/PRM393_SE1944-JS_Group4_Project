@@ -68,6 +68,18 @@
         <servlet-name>IssueTicketServlet</servlet-name>
         <servlet-class>com.conference.api.IssueTicketServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>CheckInServlet</servlet-name>
+        <servlet-class>com.conference.api.CheckInServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>RevokeTicketServlet</servlet-name>
+        <servlet-class>com.conference.api.RevokeTicketServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>AdminAttendeesServlet</servlet-name>
+        <servlet-class>com.conference.api.AdminAttendeesServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>HealthServlet</servlet-name>
         <url-pattern>/HealthServlet</url-pattern>
@@ -135,6 +147,18 @@
     <servlet-mapping>
         <servlet-name>IssueTicketServlet</servlet-name>
         <url-pattern>/api/admin/issue-ticket/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>CheckInServlet</servlet-name>
+        <url-pattern>/api/staff/check-in</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RevokeTicketServlet</servlet-name>
+        <url-pattern>/api/admin/revoke-ticket/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AdminAttendeesServlet</servlet-name>
+        <url-pattern>/api/admin/attendees</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

@@ -8,11 +8,14 @@ com\conference\api\PasswordTestServlet.class
 com\conference\api\IssueTicketServlet.class
 com\conference\api\DatabaseTestServlet.class
 com\conference\util\PasswordUtil.class
+com\conference\api\CheckInServlet.class
 com\conference\api\RegistrationDetailServlet.class
 com\conference\security\RequireRole.class
+com\conference\api\AdminAttendeesServlet.class
 com\conference\api\MyRegistrationsServlet.class
 com\conference\api\HealthServlet.class
 com\conference\api\RegisterServlet.class
+com\conference\api\RevokeTicketServlet.class
 com\conference\api\CreateConferenceServlet.class
 com\conference\api\RegisterServlet$ErrorResponse.class
 com\conference\api\ConferenceServlet.class
