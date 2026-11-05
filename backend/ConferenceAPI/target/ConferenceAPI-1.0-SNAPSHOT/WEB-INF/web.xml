@@ -56,6 +56,18 @@
         <servlet-name>RegisterConferenceServlet</servlet-name>
         <servlet-class>com.conference.api.RegisterConferenceServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>MyRegistrationsServlet</servlet-name>
+        <servlet-class>com.conference.api.MyRegistrationsServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>RegistrationDetailServlet</servlet-name>
+        <servlet-class>com.conference.api.RegistrationDetailServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>IssueTicketServlet</servlet-name>
+        <servlet-class>com.conference.api.IssueTicketServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>HealthServlet</servlet-name>
         <url-pattern>/HealthServlet</url-pattern>
@@ -111,6 +123,18 @@
     <servlet-mapping>
         <servlet-name>RegisterConferenceServlet</servlet-name>
         <url-pattern>/api/register-conference/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>MyRegistrationsServlet</servlet-name>
+        <url-pattern>/api/my-registrations</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RegistrationDetailServlet</servlet-name>
+        <url-pattern>/api/my-registrations/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>IssueTicketServlet</servlet-name>
+        <url-pattern>/api/admin/issue-ticket/*</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

@@ -22,7 +22,9 @@ import java.util.Map;
     "/api/me",
     "/api/admin/*",
     "/api/staff/*",
-    "/api/register-conference/*"
+    "/api/register-conference/*",
+    "/api/my-registrations",
+    "/api/my-registrations/*"
 })
 public class AuthFilter implements Filter {
 
@@ -138,6 +140,17 @@ public class AuthFilter implements Filter {
         }
 
         if (path.contains("/api/register-conference/")) {
+            if (!"Attendee".equals(role)) {
+                sendError(
+                        httpResponse,
+                        403,
+                        "Attendee permission required"
+                );
+                return;
+            }
+        }
+
+        if (path.contains("/api/my-registrations")) {
             if (!"Attendee".equals(role)) {
                 sendError(
                         httpResponse,
