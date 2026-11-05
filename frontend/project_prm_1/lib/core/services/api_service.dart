@@ -78,4 +78,41 @@ class ApiService {
       data['message'] ?? 'Request failed: ${response.statusCode}',
     );
   }
+
+
+  static Future<List<dynamic>> getList(
+      String url, {
+        String? token,
+      }) async {
+    final response = await http.get(
+      Uri.parse(url),
+      headers: _headers(token),
+    );
+
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300) {
+      final data = jsonDecode(response.body);
+
+      if (data is List) {
+        return data;
+      }
+
+      throw Exception('Expected a JSON array from API');
+    }
+
+    try {
+      final data = jsonDecode(response.body);
+
+      if (data is Map<String, dynamic>) {
+        throw Exception(
+          data['message'] ?? 'Request failed: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      if (e is Exception) rethrow;
+    }
+
+    throw Exception('Request failed: ${response.statusCode}');
+  }
+
 }

@@ -25,4 +25,8 @@ class ApiConfig {
   // Staff
   static const String staffCheckIn =
       '$baseUrl/api/staff/check-in';
+
+  //register conference
+  static const String registerConference =
+      '$baseUrl/api/register-conference';
 }

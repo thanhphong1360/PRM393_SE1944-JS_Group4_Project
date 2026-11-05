@@ -1,3 +1,4 @@
+
 class Conference {
   final int conferenceId;
   final String title;
@@ -5,7 +6,7 @@ class Conference {
   final DateTime startDate;
   final String? description;
   final String status;
-  final String registrationPolicy;
+  final String? registrationPolicy;
 
   Conference({
     required this.conferenceId,
@@ -14,18 +15,18 @@ class Conference {
     required this.startDate,
     this.description,
     required this.status,
-    required this.registrationPolicy,
+    this.registrationPolicy,
   });
 
   factory Conference.fromJson(Map<String, dynamic> json) {
     return Conference(
-      conferenceId: json['conference_id'],
-      title: json['title'],
-      location: json['location'],
-      startDate: DateTime.parse(json['start_date']),
-      description: json['description'],
-      status: json['status'],
-      registrationPolicy: json['registration_policy'],
+      conferenceId: json['conference_id'] as int,
+      title: json['title'] as String,
+      location: json['location'] as String,
+      startDate: DateTime.parse(json['start_date'] as String),
+      description: json['description'] as String?,
+      status: json['status'] as String,
+      registrationPolicy: json['registration_policy'] as String?,
     );
   }
 

@@ -1,8 +1,11 @@
+
 import 'package:flutter/material.dart';
 
-import 'features/auth/screens/login_screen.dart';
+import 'core/services/auth_wrapper.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
   runApp(const ConferenceApp());
 }
 
@@ -20,7 +23,7 @@ class ConferenceApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      home: const AuthWrapper(),
     );
   }
 }
