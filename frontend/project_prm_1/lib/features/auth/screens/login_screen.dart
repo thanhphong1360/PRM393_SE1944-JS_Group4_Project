@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/services/auth_service.dart';
+import '../../../shared/screens/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -35,27 +36,30 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final user = await AuthService.login(
+      // Step 1: Authenticate user and save JWT
+      await AuthService.login(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
+      // Step 2: Retrieve current user information
+      final user = await AuthService.getCurrentUser();
+
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Login successful! Role: ${user.role}'),
-          backgroundColor: Colors.green,
+      // Step 3: Navigate to HomeScreen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(user: user),
         ),
       );
     } catch (e) {
       if (!mounted) return;
 
-      final errorMessage = e.toString().replaceFirst('Exception: ', '');
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(errorMessage),
+          content: Text(e.toString()),
           backgroundColor: Colors.red,
         ),
       );

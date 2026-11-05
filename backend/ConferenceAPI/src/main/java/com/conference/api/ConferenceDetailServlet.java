@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -65,7 +66,7 @@ public class ConferenceDetailServlet extends HttpServlet {
         }
 
         // 3. Truy vấn database
-        String sql = "SELECT conference_id,title,location,start_date,description FROM Conference WHERE conference_id = ?";
+        String sql = "SELECT conference_id,title,location,start_date,description,status,registration_policy FROM Conference WHERE conference_id = ?";
 
         try (Connection connection =
                      DBConnection.getConnection();
@@ -121,6 +122,9 @@ public class ConferenceDetailServlet extends HttpServlet {
                 } else {
                     conference.putNull("description");
                 }
+                
+                conference.put("status", result.getString("status"));
+                conference.put("registration_policy", result.getString("registration_policy"));
 
                 response.setStatus(
                         HttpServletResponse.SC_OK
