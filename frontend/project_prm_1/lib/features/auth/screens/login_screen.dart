@@ -36,18 +36,13 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // Step 1: Authenticate user and save JWT
-      await AuthService.login(
+      final user = await AuthService.login(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
-      // Step 2: Retrieve current user information
-      final user = await AuthService.getCurrentUser();
-
       if (!mounted) return;
 
-      // Step 3: Navigate to HomeScreen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -59,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.toString()),
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
           backgroundColor: Colors.red,
         ),
       );

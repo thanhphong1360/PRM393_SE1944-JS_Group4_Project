@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../models/user.dart';
 import '../../core/services/auth_service.dart';
-import '../../features/auth/screens/login_screen.dart';
 import '../../features/attendee/screens/conference_list_screen.dart';
+import '../../features/auth/screens/login_screen.dart';
+import '../../features/check_in/screens/qr_scanner_screen.dart';
+import '../../features/staff/screens/staff_dashboard_screen.dart';
+import '../../features/tickets/screens/my_tickets_screen.dart';
+import '../../models/user.dart';
 
 class HomeScreen extends StatelessWidget {
   final User user;
@@ -36,12 +39,15 @@ class HomeScreen extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) => const LoginScreen(),
       ),
-          (route) => false,
+      (route) => false,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isStaffOrAdmin = user.role == 'Staff' || user.role == 'Admin';
+    final isAttendee = user.role == 'Attendee';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Conference Management'),
@@ -54,7 +60,7 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -62,6 +68,7 @@ class HomeScreen extends StatelessWidget {
               const Icon(
                 Icons.account_circle,
                 size: 80,
+                color: Colors.blue,
               ),
               const SizedBox(height: 20),
 
@@ -85,18 +92,69 @@ class HomeScreen extends StatelessWidget {
                 roleDescription,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              if (user.role == 'Attendee') ...[
-                const SizedBox(height: 20),
 
+              const SizedBox(height: 24),
+
+              // Staff / Admin Options: QR Check-in scanner
+              if (isStaffOrAdmin) ...[
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const QRScannerScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.qr_code_scanner),
+                    label: const Text(
+                      'Quét mã QR Điểm danh',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                          const ConferenceListScreen(),
+                              StaffDashboardScreen(initialUser: user),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.dashboard_customize),
+                    label: const Text('Bàn Quản Lý Điểm Danh'),
+                  ),
+                ),
+              ],
+
+              // Attendee Options: Browse Conferences & My Tickets
+              if (isAttendee) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ConferenceListScreen(),
                         ),
                       );
                     },
@@ -104,8 +162,27 @@ class HomeScreen extends StatelessWidget {
                     label: const Text('Browse Conferences'),
                   ),
                 ),
-              ],            ],
-
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MyTicketsScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.qr_code),
+                    label: const Text('Vé Của Tôi & Mã QR Điểm Danh'),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),
