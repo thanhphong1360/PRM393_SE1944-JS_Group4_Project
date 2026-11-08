@@ -1,3 +1,4 @@
+
 package com.conference.api;
 
 import com.conference.config.DBConnection;
@@ -19,12 +20,21 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.Set;
 
-@WebServlet(name = "CreateConferenceServlet", urlPatterns = {"/api/admin/conferences"})
+@WebServlet(
+        name = "CreateConferenceServlet",
+        urlPatterns = {"/api/admin/conferences"}
+)
 public class CreateConferenceServlet extends HttpServlet {
 
-    private final ObjectMapper objectMapper
-            = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final Set<String> VALID_POLICIES = Set.of(
+            "Open",
+            "ApprovalRequired",
+            "InvitationOnly"
+    );
 
     @Override
     protected void doPost(
@@ -35,13 +45,11 @@ public class CreateConferenceServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        // 1. Đọc JSON
+        // 1. Read JSON
         JsonNode json;
 
         try {
-            json = objectMapper.readTree(
-                    request.getInputStream()
-            );
+            json = objectMapper.readTree(request.getInputStream());
         } catch (Exception e) {
             sendError(response, 400, "Invalid JSON");
             return;
@@ -52,33 +60,35 @@ public class CreateConferenceServlet extends HttpServlet {
             return;
         }
 
-        // 2. Lấy dữ liệu
+        // 2. Get data
         String title = getText(json, "title");
         String location = getText(json, "location");
         String startDateText = getText(json, "start_date");
         String description = getText(json, "description");
+        String registrationPolicy = getText(json, "registration_policy");
 
-        // 3. Kiểm tra dữ liệu bắt buộc
+        // 3. Validate required fields
         if (title == null || title.isBlank()
                 || location == null || location.isBlank()
-                || startDateText == null
-                || startDateText.isBlank()) {
+                || startDateText == null || startDateText.isBlank()
+                || registrationPolicy == null
+                || registrationPolicy.isBlank()) {
 
             sendError(
                     response,
                     400,
-                    "Title, location and start_date are required"
+                    "Title, location, start_date and registration_policy are required"
             );
             return;
         }
 
         title = title.trim();
         location = location.trim();
+        registrationPolicy = registrationPolicy.trim();
 
         if (title.length() > 200
                 || location.length() > 200
-                || (description != null
-                && description.length() > 1000)) {
+                || (description != null && description.length() > 1000)) {
 
             sendError(
                     response,
@@ -88,7 +98,17 @@ public class CreateConferenceServlet extends HttpServlet {
             return;
         }
 
-        // 4. Chuyển ngày thành LocalDate
+        // 4. Validate registration policy
+        if (!VALID_POLICIES.contains(registrationPolicy)) {
+            sendError(
+                    response,
+                    400,
+                    "Invalid registration_policy. Allowed values: Open, ApprovalRequired, InvitationOnly"
+            );
+            return;
+        }
+
+        // 5. Parse start date
         LocalDate startDate;
 
         try {
@@ -102,38 +122,32 @@ public class CreateConferenceServlet extends HttpServlet {
             return;
         }
 
-        // 5. Insert vào SQL Server
-        String sql = "INSERT INTO Conference (title,location,start_date,description) VALUES (?, ?, ?, ?) ";
+        // 6. Insert into SQL Server
+        String sql = "INSERT INTO Conference "
+                + "(title, location, start_date, description, registration_policy) "
+                + "VALUES (?, ?, ?, ?, ?)";
 
-        try (Connection connection
-                = DBConnection.getConnection(); PreparedStatement statement
-                = connection.prepareStatement(
+        try (Connection connection = DBConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(
                         sql,
                         PreparedStatement.RETURN_GENERATED_KEYS
                 )) {
 
             statement.setString(1, title);
             statement.setString(2, location);
-            statement.setDate(
-                    3,
-                    Date.valueOf(startDate)
-            );
+            statement.setDate(3, Date.valueOf(startDate));
             statement.setString(4, description);
+            statement.setString(5, registrationPolicy);
 
             int affectedRows = statement.executeUpdate();
 
             if (affectedRows == 0) {
-                sendError(
-                        response,
-                        500,
-                        "Failed to create conference"
-                );
+                sendError(response, 500, "Failed to create conference");
                 return;
             }
 
-            // 6. Lấy ID vừa được database tạo
-            try (ResultSet generatedKeys
-                    = statement.getGeneratedKeys()) {
+            // 7. Get generated conference ID
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
 
                 if (!generatedKeys.next()) {
                     sendError(
@@ -144,28 +158,19 @@ public class CreateConferenceServlet extends HttpServlet {
                     return;
                 }
 
-                int conferenceId
-                        = generatedKeys.getInt(1);
+                int conferenceId = generatedKeys.getInt(1);
 
-                // 7. Trả JSON
-                ObjectNode result
-                        = objectMapper.createObjectNode();
+                // 8. Return JSON
+                ObjectNode result = objectMapper.createObjectNode();
 
                 result.put("success", true);
-                result.put(
-                        "message",
-                        "Conference created successfully"
-                );
+                result.put("message", "Conference created successfully");
                 result.put("conference_id", conferenceId);
+                result.put("registration_policy", registrationPolicy);
 
-                response.setStatus(
-                        HttpServletResponse.SC_CREATED
-                );
+                response.setStatus(HttpServletResponse.SC_CREATED);
 
-                objectMapper.writeValue(
-                        response.getWriter(),
-                        result
-                );
+                objectMapper.writeValue(response.getWriter(), result);
             }
 
         } catch (SQLException e) {
@@ -182,11 +187,7 @@ public class CreateConferenceServlet extends HttpServlet {
     private String getText(JsonNode json, String field) {
         JsonNode value = json.get(field);
 
-        if (value == null || value.isNull()) {
-            return null;
-        }
-
-        if (!value.isTextual()) {
+        if (value == null || value.isNull() || !value.isTextual()) {
             return null;
         }
 
@@ -200,15 +201,11 @@ public class CreateConferenceServlet extends HttpServlet {
 
         response.setStatus(status);
 
-        ObjectNode error
-                = objectMapper.createObjectNode();
+        ObjectNode error = objectMapper.createObjectNode();
 
         error.put("success", false);
         error.put("message", message);
 
-        objectMapper.writeValue(
-                response.getWriter(),
-                error
-        );
+        objectMapper.writeValue(response.getWriter(), error);
     }
 }

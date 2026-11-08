@@ -1,12 +1,11 @@
+
 import 'package:flutter/material.dart';
 
 import '../../core/services/auth_service.dart';
-import '../../features/attendee/screens/conference_list_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
-import '../../features/check_in/screens/qr_scanner_screen.dart';
-import '../../features/staff/screens/staff_dashboard_screen.dart';
-import '../../features/tickets/screens/my_tickets_screen.dart';
-import '../../models/user.dart';
+import '../../features/admin/screens/admin_dashboard_screen.dart';
+import '../../features/attendee/screens/conference_list_screen.dart';
+import '../../features/attendee/screens/my_registrations_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final User user;
@@ -16,7 +15,7 @@ class HomeScreen extends StatelessWidget {
     required this.user,
   });
 
-  String get roleDescription {
+  String _getDashboardTitle() {
     switch (user.role) {
       case 'Admin':
         return 'Administrator Dashboard';
@@ -25,7 +24,7 @@ class HomeScreen extends StatelessWidget {
       case 'Attendee':
         return 'Attendee Dashboard';
       default:
-        return 'Unknown Role';
+        return 'Dashboard';
     }
   }
 
@@ -37,7 +36,7 @@ class HomeScreen extends StatelessWidget {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
+        builder: (context) => const LoginScreen(),
       ),
       (route) => false,
     );
@@ -45,145 +44,101 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isStaffOrAdmin = user.role == 'Staff' || user.role == 'Admin';
-    final isAttendee = user.role == 'Attendee';
+    if (user.role == 'Admin') {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Conference Management'),
+          actions: [
+            IconButton(
+              onPressed: () => _logout(context),
+              icon: const Icon(Icons.logout),
+              tooltip: 'Logout',
+            ),
+          ],
+        ),
+        body: AdminDashboardScreen(user: user),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Conference Management'),
         actions: [
           IconButton(
+            onPressed: () => _logout(context),
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
-            onPressed: () => _logout(context),
           ),
         ],
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.account_circle,
-                size: 80,
-                color: Colors.blue,
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome, ${user.fullName ?? user.email}',
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
               ),
+            ),
+
+            const SizedBox(height: 8),
+
+            Text('Email: ${user.email}'),
+            Text('Role: ${user.role}'),
+
+            const SizedBox(height: 24),
+
+            Text(
+              _getDashboardTitle(),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            if (user.role == 'Attendee') ...[
               const SizedBox(height: 20),
 
-              Text(
-                'Welcome, ${user.fullName ?? user.email}!',
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.center,
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                        const ConferenceListScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.event),
+                  label: const Text('Browse Conferences'),
+                ),
               ),
 
               const SizedBox(height: 12),
 
-              Text('Email: ${user.email}'),
-
-              const SizedBox(height: 8),
-
-              Text('Role: ${user.role}'),
-
-              const SizedBox(height: 24),
-
-              Text(
-                roleDescription,
-                style: Theme.of(context).textTheme.titleLarge,
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                        const MyRegistrationsScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.confirmation_number),
+                  label: const Text('My Registrations'),
+                ),
               ),
-
-              const SizedBox(height: 24),
-
-              // Staff / Admin Options: QR Check-in scanner
-              if (isStaffOrAdmin) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const QRScannerScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.qr_code_scanner),
-                    label: const Text(
-                      'Quét mã QR Điểm danh',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              StaffDashboardScreen(initialUser: user),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.dashboard_customize),
-                    label: const Text('Bàn Quản Lý Điểm Danh'),
-                  ),
-                ),
-              ],
-
-              // Attendee Options: Browse Conferences & My Tickets
-              if (isAttendee) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ConferenceListScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.event),
-                    label: const Text('Browse Conferences'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MyTicketsScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.qr_code),
-                    label: const Text('Vé Của Tôi & Mã QR Điểm Danh'),
-                  ),
-                ),
-              ],
             ],
-          ),
+          ],
         ),
       ),
     );

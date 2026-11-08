@@ -183,19 +183,6 @@ public class IssueTicketServlet extends HttpServlet {
 
                     String attendeeEmail
                             = userRs.getString("email");
-
-                    // Temporary verification
-                    response.setStatus(
-                            HttpServletResponse.SC_OK
-                    );
-
-                    response.getWriter().write(
-                            "{\"message\":\"Attendee is valid\","
-                            + "\"conference_id\":" + conferenceId + ","
-                            + "\"user_id\":" + userId + ","
-                            + "\"attendee_name\":\"" + attendeeName + "\","
-                            + "\"attendee_email\":\"" + attendeeEmail + "\"}"
-                    );
                 }
             }
 

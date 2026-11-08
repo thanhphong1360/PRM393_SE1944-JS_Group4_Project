@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 
 class ApiConfig {
   /// Có thể điền IP thủ công nếu test trên điện thoại thật (VD: 'http://192.168.1.15:8081/ConferenceAPI')
@@ -24,26 +23,22 @@ class ApiConfig {
     return 'http://localhost:8081/ConferenceAPI';
   }
 
-  // Authentication
-  static String get register => '$baseUrl/api/auth/register';
-  static String get login => '$baseUrl/api/auth/login';
+  static const String register = '$baseUrl/api/auth/register';
+  static const String login = '$baseUrl/api/auth/login';
+  static const String me = '$baseUrl/api/me';
 
-  // User
-  static String get me => '$baseUrl/api/me';
+  static const String conferences = '$baseUrl/api/conferences';
 
-  // Conferences
-  static String get conferences => '$baseUrl/api/conferences';
+  static const String myRegistrations = '$baseUrl/api/my-registrations';
 
-  // Attendee
-  static String get myRegistrations => '$baseUrl/api/my-registrations';
+  static const String adminConferences =
+      '$baseUrl/api/admin/conferences';
+  static const String adminAttendees =
+      '$baseUrl/api/admin/attendees';
 
-  // Admin
-  static String get adminConferences => '$baseUrl/api/admin/conferences';
-  static String get adminAttendees => '$baseUrl/api/admin/attendees';
+  static const String staffCheckIn =
+      '$baseUrl/api/staff/check-in';
 
-  // Staff
-  static String get staffCheckIn => '$baseUrl/api/staff/check-in';
-
-  // Register conference
-  static String get registerConference => '$baseUrl/api/register-conference';
+  static const String registerConference =
+      '$baseUrl/api/register-conference';
 }
