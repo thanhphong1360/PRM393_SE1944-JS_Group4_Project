@@ -7,8 +7,8 @@ import java.sql.SQLException;
 public class DBConnection {
 
     private static final String URL
-            = "jdbc:sqlserver://DESKTOP-LI8DM67:1433;"
-            + "databaseName=ConferenceDB;"
+            = "jdbc:sqlserver://localhost:1433;"
+            + "databaseName=PRMProject;"
             + "encrypt=true;"
             + "trustServerCertificate=true;";
 
@@ -26,7 +26,7 @@ public class DBConnection {
         return DriverManager.getConnection(
                 URL,
                 "sa",
-                "123"
+                "123456"
         );
     }
 
