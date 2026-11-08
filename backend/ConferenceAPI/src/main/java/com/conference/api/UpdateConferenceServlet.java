@@ -1,3 +1,4 @@
+
 package com.conference.api;
 
 import com.conference.config.DBConnection;
@@ -18,12 +19,21 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.Set;
 
-@WebServlet(name = "UpdateConferenceServlet", urlPatterns = {"/api/admin/conferences/*"})
+@WebServlet(
+        name = "UpdateConferenceServlet",
+        urlPatterns = {"/api/admin/conferences/*"}
+)
 public class UpdateConferenceServlet extends HttpServlet {
 
-    private final ObjectMapper objectMapper
-            = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final Set<String> VALID_POLICIES = Set.of(
+            "Open",
+            "ApprovalRequired",
+            "InvitationOnly"
+    );
 
     @Override
     protected void doPut(
@@ -34,39 +44,33 @@ public class UpdateConferenceServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        // 1. Lấy ID từ URL
+        // 1. Get ID from URL
         String pathInfo = request.getPathInfo();
 
         if (pathInfo == null || pathInfo.equals("/")) {
-            sendError(response, 400,
-                    "Conference ID is required");
+            sendError(response, 400, "Conference ID is required");
             return;
         }
 
         int conferenceId;
 
         try {
-            conferenceId = Integer.parseInt(
-                    pathInfo.substring(1)
-            );
+            conferenceId = Integer.parseInt(pathInfo.substring(1));
 
             if (conferenceId <= 0) {
                 throw new NumberFormatException();
             }
 
         } catch (NumberFormatException e) {
-            sendError(response, 400,
-                    "Invalid conference ID");
+            sendError(response, 400, "Invalid conference ID");
             return;
         }
 
-        // 2. Đọc JSON
+        // 2. Read JSON
         JsonNode json;
 
         try {
-            json = objectMapper.readTree(
-                    request.getInputStream()
-            );
+            json = objectMapper.readTree(request.getInputStream());
         } catch (Exception e) {
             sendError(response, 400, "Invalid JSON");
             return;
@@ -77,102 +81,120 @@ public class UpdateConferenceServlet extends HttpServlet {
             return;
         }
 
-        // 3. Lấy dữ liệu
+        // 3. Get data
         String title = getText(json, "title");
         String location = getText(json, "location");
         String startDateText = getText(json, "start_date");
         String description = getText(json, "description");
+        String registrationPolicy = getText(json, "registration_policy");
 
+        // 4. Validate required fields
         if (title == null || title.isBlank()
                 || location == null || location.isBlank()
-                || startDateText == null
-                || startDateText.isBlank()) {
+                || startDateText == null || startDateText.isBlank()
+                || registrationPolicy == null
+                || registrationPolicy.isBlank()) {
 
-            sendError(response, 400,
-                    "Title, location and start_date are required");
+            sendError(
+                    response,
+                    400,
+                    "Title, location, start_date and registration_policy are required"
+            );
             return;
         }
 
         title = title.trim();
         location = location.trim();
+        registrationPolicy = registrationPolicy.trim();
 
         if (title.length() > 200
                 || location.length() > 200
-                || (description != null
-                && description.length() > 1000)) {
+                || (description != null && description.length() > 1000)) {
 
-            sendError(response, 400,
-                    "One or more fields exceed the allowed length");
+            sendError(
+                    response,
+                    400,
+                    "One or more fields exceed the allowed length"
+            );
             return;
         }
 
-        // 4. Chuyển ngày
+        // 5. Validate registration policy
+        if (!VALID_POLICIES.contains(registrationPolicy)) {
+            sendError(
+                    response,
+                    400,
+                    "Invalid registration_policy. Allowed values: Open, ApprovalRequired, InvitationOnly"
+            );
+            return;
+        }
+
+        // 6. Parse date
         LocalDate startDate;
 
         try {
             startDate = LocalDate.parse(startDateText);
         } catch (DateTimeParseException e) {
-            sendError(response, 400,
-                    "start_date must use YYYY-MM-DD format");
+            sendError(
+                    response,
+                    400,
+                    "start_date must use YYYY-MM-DD format"
+            );
             return;
         }
 
-        // 5. Cập nhật database
-        String sql = "UPDATE Conference SET title = ?,location = ?,start_date = ?,description = ? WHERE conference_id = ?";
+        // 7. Update database
+        String sql = "UPDATE Conference SET "
+                + "title = ?, "
+                + "location = ?, "
+                + "start_date = ?, "
+                + "description = ?, "
+                + "registration_policy = ? "
+                + "WHERE conference_id = ?";
 
-        try (Connection connection
-                = DBConnection.getConnection(); PreparedStatement statement
-                = connection.prepareStatement(sql)) {
+        try (Connection connection = DBConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, title);
             statement.setString(2, location);
-            statement.setDate(
-                    3,
-                    Date.valueOf(startDate)
-            );
+            statement.setDate(3, Date.valueOf(startDate));
             statement.setString(4, description);
-            statement.setInt(5, conferenceId);
+            statement.setString(5, registrationPolicy);
+            statement.setInt(6, conferenceId);
 
             int affectedRows = statement.executeUpdate();
 
             if (affectedRows == 0) {
-                sendError(response, 404,
-                        "Conference not found");
+                sendError(response, 404, "Conference not found");
                 return;
             }
 
-            ObjectNode result
-                    = objectMapper.createObjectNode();
+            ObjectNode result = objectMapper.createObjectNode();
 
             result.put("success", true);
-            result.put(
-                    "message",
-                    "Conference updated successfully"
-            );
+            result.put("message", "Conference updated successfully");
             result.put("conference_id", conferenceId);
+            result.put("registration_policy", registrationPolicy);
 
-            response.setStatus(
-                    HttpServletResponse.SC_OK
-            );
+            response.setStatus(HttpServletResponse.SC_OK);
 
-            objectMapper.writeValue(
-                    response.getWriter(),
-                    result
-            );
+            objectMapper.writeValue(response.getWriter(), result);
 
         } catch (SQLException e) {
             log("Update conference database error", e);
 
-            sendError(response, 500,
-                    "Failed to update conference");
+            sendError(
+                    response,
+                    500,
+                    "Failed to update conference"
+            );
         }
     }
 
     private String getText(JsonNode json, String field) {
         JsonNode value = json.get(field);
 
-        if (value == null || value.isNull()
-                || !value.isTextual()) {
+        if (value == null || value.isNull() || !value.isTextual()) {
             return null;
         }
 
@@ -186,16 +208,12 @@ public class UpdateConferenceServlet extends HttpServlet {
 
         response.setStatus(status);
 
-        ObjectNode error
-                = objectMapper.createObjectNode();
+        ObjectNode error = objectMapper.createObjectNode();
 
         error.put("success", false);
         error.put("message", message);
 
-        objectMapper.writeValue(
-                response.getWriter(),
-                error
-        );
+        objectMapper.writeValue(response.getWriter(), error);
     }
 
     @Override
@@ -206,7 +224,7 @@ public class UpdateConferenceServlet extends HttpServlet {
 
         response.setContentType("application/json;charset=UTF-8");
 
-        // Lấy conference_id từ URL
+        // Get conference ID from URL
         String pathInfo = request.getPathInfo();
 
         if (pathInfo == null || !pathInfo.matches("/\\d+")) {
@@ -221,8 +239,9 @@ public class UpdateConferenceServlet extends HttpServlet {
 
         String sql = "UPDATE Conference SET status = ? WHERE conference_id = ?";
 
-        try (Connection conn = DBConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
             stmt.setString(1, "Cancelled");
             stmt.setInt(2, conferenceId);
 
@@ -242,7 +261,7 @@ public class UpdateConferenceServlet extends HttpServlet {
             );
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            log("Delete conference database error", e);
 
             response.setStatus(
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR

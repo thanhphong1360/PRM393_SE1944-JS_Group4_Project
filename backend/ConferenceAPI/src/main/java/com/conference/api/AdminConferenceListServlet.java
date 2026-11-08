@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,7 +32,7 @@ public class AdminConferenceListServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
 
         String sql = "SELECT conference_id, title, location,\n"+
-                       "start_date, description, status\n"+
+                       "start_date, description, status, registration_policy\n"+
                 "FROM Conference\n"+
                 "ORDER BY start_date ASC";
 
@@ -66,6 +67,8 @@ public class AdminConferenceListServlet extends HttpServlet {
                 }
 
                 conference.put("status", rs.getString("status"));
+                
+                conference.put("registration_policy", rs.getString("registration_policy"));
 
                 conferences.add(conference);
             }
