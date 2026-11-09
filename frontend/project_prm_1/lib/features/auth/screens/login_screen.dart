@@ -1,7 +1,9 @@
+
 import 'package:flutter/material.dart';
 
 import '../../../core/services/auth_service.dart';
 import '../../../shared/screens/home_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,6 +26,28 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openRegisterScreen() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const RegisterScreen(),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (result == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Registration successful. Please log in.',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   Future<void> _login() async {
@@ -169,6 +193,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: _isLoading
                       ? const CircularProgressIndicator()
                       : const Text('Login'),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Register navigation
+                TextButton(
+                  onPressed: _isLoading ? null : _openRegisterScreen,
+                  child: const Text(
+                    "Don't have an account? Create an account",
+                  ),
                 ),
               ],
             ),
