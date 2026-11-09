@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../models/user.dart';
 import '../../core/services/auth_service.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
@@ -39,7 +38,7 @@ class HomeScreen extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) => const LoginScreen(),
       ),
-          (route) => false,
+      (route) => false,
     );
   }
 

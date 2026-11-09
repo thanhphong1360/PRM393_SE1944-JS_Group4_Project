@@ -47,6 +47,11 @@ public class AuthFilter implements Filter {
         httpResponse.setContentType("application/json");
         httpResponse.setCharacterEncoding("UTF-8");
 
+        if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())) {
+            httpResponse.setStatus(HttpServletResponse.SC_OK);
+            return;
+        }
+
         // 1. Lấy JWT từ Authorization header
         String authHeader
                 = httpRequest.getHeader("Authorization");
