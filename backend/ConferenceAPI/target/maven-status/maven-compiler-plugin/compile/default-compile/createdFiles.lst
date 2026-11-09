@@ -17,6 +17,7 @@ com\conference\api\HealthServlet.class
 com\conference\api\RegisterServlet.class
 com\conference\api\RevokeTicketServlet.class
 com\conference\api\CreateConferenceServlet.class
+com\conference\api\ValidateTicketServlet.class
 com\conference\api\RegisterServlet$ErrorResponse.class
 com\conference\api\ConferenceServlet.class
 com\conference\api\MeServlet.class

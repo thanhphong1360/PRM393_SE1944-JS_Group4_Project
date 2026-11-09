@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../../core/services/auth_service.dart';
@@ -6,6 +5,7 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
 import '../../features/attendee/screens/conference_list_screen.dart';
 import '../../features/attendee/screens/my_registrations_screen.dart';
+import '../../features/staff/screens/staff_dashboard_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final User user;
@@ -42,35 +42,37 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      title: const Text('Conference Management'),
+      actions: [
+        IconButton(
+          onPressed: () => _logout(context),
+          icon: const Icon(Icons.logout),
+          tooltip: 'Logout',
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (user.role == 'Admin') {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Conference Management'),
-          actions: [
-            IconButton(
-              onPressed: () => _logout(context),
-              icon: const Icon(Icons.logout),
-              tooltip: 'Logout',
-            ),
-          ],
-        ),
+        appBar: _buildAppBar(context),
         body: AdminDashboardScreen(user: user),
       );
     }
 
+    if (user.role == 'Staff') {
+      return Scaffold(
+        appBar: _buildAppBar(context),
+        body: StaffDashboardScreen(user: user),
+      );
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Conference Management'),
-        actions: [
-          IconButton(
-            onPressed: () => _logout(context),
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(context),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -83,14 +85,10 @@ class HomeScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 8),
-
             Text('Email: ${user.email}'),
             Text('Role: ${user.role}'),
-
             const SizedBox(height: 24),
-
             Text(
               _getDashboardTitle(),
               style: const TextStyle(
@@ -98,10 +96,8 @@ class HomeScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             if (user.role == 'Attendee') ...[
               const SizedBox(height: 20),
-
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -118,9 +114,7 @@ class HomeScreen extends StatelessWidget {
                   label: const Text('Browse Conferences'),
                 ),
               ),
-
               const SizedBox(height: 12),
-
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
