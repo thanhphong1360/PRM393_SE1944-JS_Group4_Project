@@ -54,6 +54,15 @@ public class CheckInServlet extends HttpServlet {
             return;
         }
 
+        if (json == null || !json.isObject()) {
+            sendError(
+                    response,
+                    HttpServletResponse.SC_BAD_REQUEST,
+                    "Invalid JSON object"
+            );
+            return;
+        }
+
         // 2. Get ticket_id
         JsonNode ticketNode = json.get("ticket_id");
 
@@ -85,30 +94,51 @@ public class CheckInServlet extends HttpServlet {
             return;
         }
 
-        // 4. SQL query
-        String sql = "SELECT\n"+
-                "cr.ticket_id,\n"+
-                "cr.status,\n"+
-               "cr.registered_at,\n"+
+        // 4. Get conference_id
+        JsonNode conferenceNode = json.get("conference_id");
 
-                "u.user_id,\n"+
-                "u.full_name,\n"+
-                "u.email,\n"+
+        if (conferenceNode == null
+                || !conferenceNode.isIntegralNumber()
+                || !conferenceNode.canConvertToInt()) {
 
-                "c.conference_id,\n"+
-                "c.title AS conference_title,\n"+
-                "c.location,\n"+
-                "c.start_date\n"+
+            sendError(
+                    response,
+                    HttpServletResponse.SC_BAD_REQUEST,
+                    "conference_id is required and must be an integer"
+            );
+            return;
+        }
 
-            "FROM ConferenceRegistration cr\n"+
+        int requestedConferenceId = conferenceNode.asInt();
 
-            "INNER JOIN Users u\n"+
-                "ON cr.user_id = u.user_id\n"+
+        if (requestedConferenceId <= 0) {
+            sendError(
+                    response,
+                    HttpServletResponse.SC_BAD_REQUEST,
+                    "Invalid conference_id"
+            );
+            return;
+        }
 
-            "INNER JOIN Conference c\n"+
-                "ON cr.conference_id = c.conference_id\n"+
-
-            "WHERE cr.ticket_id = ?";
+        // 5. SQL query
+        String sql =
+                "SELECT "
+                + "cr.ticket_id, "
+                + "cr.status, "
+                + "cr.registered_at, "
+                + "u.user_id, "
+                + "u.full_name, "
+                + "u.email, "
+                + "c.conference_id, "
+                + "c.title AS conference_title, "
+                + "c.location, "
+                + "c.start_date "
+                + "FROM ConferenceRegistration cr "
+                + "INNER JOIN Users u "
+                + "ON cr.user_id = u.user_id "
+                + "INNER JOIN Conference c "
+                + "ON cr.conference_id = c.conference_id "
+                + "WHERE cr.ticket_id = ?";
 
         try (Connection connection = DBConnection.getConnection()) {
 
@@ -116,7 +146,12 @@ public class CheckInServlet extends HttpServlet {
 
             try {
 
-                // 5. Read ticket information
+                // 6. Read ticket information with row lock
+                String selectSql = sql.replace(
+                        "FROM ConferenceRegistration cr",
+                        "FROM ConferenceRegistration cr WITH (UPDLOCK, HOLDLOCK)"
+                );
+
                 String ticketStatus;
                 Timestamp registeredAt;
 
@@ -128,11 +163,6 @@ public class CheckInServlet extends HttpServlet {
                 String conferenceTitle;
                 String location;
                 Date startDate;
-
-                String selectSql = sql.replace(
-                        "FROM ConferenceRegistration cr",
-                        "FROM ConferenceRegistration cr WITH (UPDLOCK, HOLDLOCK)"
-                );
 
                 try (PreparedStatement statement =
                              connection.prepareStatement(selectSql)) {
@@ -154,9 +184,26 @@ public class CheckInServlet extends HttpServlet {
                             return;
                         }
 
+                        // 7. Read ticket status
                         ticketStatus = result.getString("status");
 
-                        // 6. Check ticket status
+                        // 8. Verify selected conference
+                        conferenceId = result.getInt("conference_id");
+
+                        if (conferenceId != requestedConferenceId) {
+
+                            connection.rollback();
+
+                            sendError(
+                                    response,
+                                    HttpServletResponse.SC_CONFLICT,
+                                    "This ticket does not belong to the selected conference"
+                            );
+
+                            return;
+                        }
+
+                        // 9. Verify ticket status
                         if (!"Valid".equals(ticketStatus)) {
 
                             connection.rollback();
@@ -180,7 +227,6 @@ public class CheckInServlet extends HttpServlet {
                         email = result.getString("email");
 
                         // Conference information
-                        conferenceId = result.getInt("conference_id");
                         conferenceTitle =
                                 result.getString("conference_title");
 
@@ -189,15 +235,16 @@ public class CheckInServlet extends HttpServlet {
                     }
                 }
 
-                // 7. Update ticket status
-                String updateSql = "UPDATE ConferenceRegistration\n"+
-                    "SET\n"+
-                        "status = 'Used',\n"+
-                        "checked_in_at = SYSUTCDATETIME()\n"+
-                    "OUTPUT INSERTED.checked_in_at\n"+
-                    "WHERE\n"+
-                        "ticket_id = ?\n"+
-                        "AND status = 'Valid'";
+                // 10. Update ticket status
+                // Only update if ticket_id, conference_id and status match
+                String updateSql =
+                        "UPDATE ConferenceRegistration "
+                        + "SET status = 'Used', "
+                        + "checked_in_at = SYSUTCDATETIME() "
+                        + "OUTPUT INSERTED.checked_in_at "
+                        + "WHERE ticket_id = ? "
+                        + "AND conference_id = ? "
+                        + "AND status = 'Valid'";
 
                 Timestamp checkedInAt;
 
@@ -205,6 +252,7 @@ public class CheckInServlet extends HttpServlet {
                              connection.prepareStatement(updateSql)) {
 
                     updateStatement.setString(1, ticketId.toString());
+                    updateStatement.setInt(2, requestedConferenceId);
 
                     try (ResultSet updateResult =
                                  updateStatement.executeQuery()) {
@@ -227,10 +275,10 @@ public class CheckInServlet extends HttpServlet {
                     }
                 }
 
-                // 8. Commit transaction
+                // 11. Commit transaction
                 connection.commit();
 
-                // 9. Build JSON response
+                // 12. Build JSON response
                 ObjectNode responseJson =
                         objectMapper.createObjectNode();
 
@@ -251,15 +299,19 @@ public class CheckInServlet extends HttpServlet {
 
                 ticketJson.put("status", "Used");
 
-                ticketJson.put(
-                        "registered_at",
-                        registeredAt.toLocalDateTime().toString()
-                );
+                if (registeredAt != null) {
+                    ticketJson.put(
+                            "registered_at",
+                            registeredAt.toLocalDateTime().toString()
+                    );
+                }
 
-                ticketJson.put(
-                        "checked_in_at",
-                        checkedInAt.toLocalDateTime().toString()
-                );
+                if (checkedInAt != null) {
+                    ticketJson.put(
+                            "checked_in_at",
+                            checkedInAt.toLocalDateTime().toString()
+                    );
+                }
 
                 // Attendee information
                 ObjectNode attendeeJson =
@@ -277,12 +329,14 @@ public class CheckInServlet extends HttpServlet {
                 conferenceJson.put("title", conferenceTitle);
                 conferenceJson.put("location", location);
 
-                conferenceJson.put(
-                        "start_date",
-                        startDate.toString()
-                );
+                if (startDate != null) {
+                    conferenceJson.put(
+                            "start_date",
+                            startDate.toString()
+                    );
+                }
 
-                // 10. Send response
+                // 13. Send response
                 response.setStatus(HttpServletResponse.SC_OK);
 
                 objectMapper.writeValue(

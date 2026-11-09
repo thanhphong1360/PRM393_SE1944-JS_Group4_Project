@@ -13,6 +13,7 @@ com\conference\api\RegistrationDetailServlet.class
 com\conference\security\RequireRole.class
 com\conference\api\AdminAttendeesServlet.class
 com\conference\api\MyRegistrationsServlet.class
+com\conference\api\RegisterServlet$RegistrationResponse.class
 com\conference\api\HealthServlet.class
 com\conference\api\RegisterServlet.class
 com\conference\api\RevokeTicketServlet.class

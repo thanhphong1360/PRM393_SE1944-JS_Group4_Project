@@ -4,13 +4,10 @@ package com.conference.api;
 import com.conference.config.DBConnection;
 import com.conference.util.PasswordUtil;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-
 import java.util.regex.Pattern;
 
 import jakarta.servlet.ServletException;
@@ -39,13 +36,21 @@ public class RegisterServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        // Đọc JSON từ request body
         JsonNode json;
 
         try {
             json = objectMapper.readTree(request.getInputStream());
+
+            if (json == null || !json.isObject()) {
+                sendError(response,
+                        HttpServletResponse.SC_BAD_REQUEST,
+                        "Invalid JSON");
+                return;
+            }
+
         } catch (Exception e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+            sendError(response,
+                    HttpServletResponse.SC_BAD_REQUEST,
                     "Invalid JSON");
             return;
         }
@@ -54,12 +59,12 @@ public class RegisterServlet extends HttpServlet {
         String email = getText(json, "email");
         String password = getText(json, "password");
 
-        // Kiểm tra dữ liệu đầu vào
         if (fullName == null || fullName.isBlank()
                 || email == null || email.isBlank()
                 || password == null || password.isBlank()) {
 
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+            sendError(response,
+                    HttpServletResponse.SC_BAD_REQUEST,
                     "All fields are required");
             return;
         }
@@ -68,28 +73,35 @@ public class RegisterServlet extends HttpServlet {
         email = email.trim().toLowerCase();
 
         if (fullName.length() > 100) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+            sendError(response,
+                    HttpServletResponse.SC_BAD_REQUEST,
                     "Full name is too long");
             return;
         }
 
         if (email.length() > 255
                 || !EMAIL_PATTERN.matcher(email).matches()) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+
+            sendError(response,
+                    HttpServletResponse.SC_BAD_REQUEST,
                     "Invalid email");
             return;
         }
 
         if (password.length() < 8) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+            sendError(response,
+                    HttpServletResponse.SC_BAD_REQUEST,
                     "Password must contain at least 8 characters");
             return;
         }
 
-        // Tạo BCrypt hash
         String passwordHash = PasswordUtil.hashPassword(password);
 
-        String sql = "INSERT INTO Users (full_name,email,password_hash,role_id) SELECT ?, ?, ?, role_id FROM Roles WHERE role_name = ?";
+        String sql =
+                "INSERT INTO Users " +
+                "(full_name, email, password_hash, role_id) " +
+                "SELECT ?, ?, ?, role_id " +
+                "FROM Roles WHERE role_name = ?";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement =
@@ -111,11 +123,18 @@ public class RegisterServlet extends HttpServlet {
 
             response.setStatus(HttpServletResponse.SC_CREATED);
 
-            response.getWriter().write("{success: true,message: Registration successful}");
+            RegistrationResponse result =
+                    new RegistrationResponse(
+                            true,
+                            "Registration successful"
+                    );
+
+            response.getWriter().write(
+                    objectMapper.writeValueAsString(result)
+            );
 
         } catch (SQLException e) {
 
-            // SQL Server error 2601/2627: duplicate unique value
             if (e.getErrorCode() == 2601
                     || e.getErrorCode() == 2627) {
 
@@ -150,11 +169,23 @@ public class RegisterServlet extends HttpServlet {
 
         response.setStatus(status);
 
-        String json = objectMapper.writeValueAsString(
-                new ErrorResponse(false, message)
-        );
+        ErrorResponse result = new ErrorResponse(false, message);
 
-        response.getWriter().write(json);
+        response.getWriter().write(
+                objectMapper.writeValueAsString(result)
+        );
+    }
+
+    private static class RegistrationResponse {
+        public boolean success;
+        public String message;
+
+        public RegistrationResponse(
+                boolean success,
+                String message) {
+            this.success = success;
+            this.message = message;
+        }
     }
 
     private static class ErrorResponse {
