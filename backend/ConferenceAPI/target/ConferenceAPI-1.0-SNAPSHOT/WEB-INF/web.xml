@@ -80,6 +80,10 @@
         <servlet-name>AdminAttendeesServlet</servlet-name>
         <servlet-class>com.conference.api.AdminAttendeesServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>ValidateTicketServlet</servlet-name>
+        <servlet-class>com.conference.api.ValidateTicketServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>HealthServlet</servlet-name>
         <url-pattern>/HealthServlet</url-pattern>
@@ -159,6 +163,10 @@
     <servlet-mapping>
         <servlet-name>AdminAttendeesServlet</servlet-name>
         <url-pattern>/api/admin/attendees</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ValidateTicketServlet</servlet-name>
+        <url-pattern>/api/staff/validate-ticket</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>
